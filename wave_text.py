@@ -10,7 +10,7 @@ class WaveText:
         def __init__(self):
             self.word = None
             self.collapsed = False
-            self.possibles = None
+            self.possibles = dict()
         
         def get_max_possible(self):
             return sorted(list(self.possibles.values()))[-1]
@@ -26,6 +26,7 @@ class WaveText:
             sentences: list of examples senteces as strings
         """
         assert sentences and len(sentences) > 0, "Generator must be provided training text"
+        assert max_dist==1, "Relax. I haven't implemented that yet. Max dist must be 1"
 
         # Setup
         num_uniques, word_set = self._count_uniques(sentences)
@@ -35,8 +36,18 @@ class WaveText:
         # Count Adjacencies
         for sentence in sentences:
             sentence_list = sentence.split(' ')
-            for word in sentence_list:
-                pass
+            for i, word_one in enumerate(sentence_list):
+                for word_two in sentence_list[i+1]:
+                    p_of_neighbors[0][word_one] = p_of_neighbors[0][word_one].get(word_two, 0) + 1
+                    p_of_neighbors[0][word_two] = p_of_neighbors[0][word_two].get(word_one, 0) + 1
+
+        # Divide adjacency count by total 
+        for word_one in p_of_neighbors[0]:
+            for word_two in p_of_neighbors[0]:
+                p_of_neighbors[0][word_one][word_two] /= num_sentences
+
+        # If everything worked, store adjacencies
+        self.possibles = p_of_neighbors.copy()    
 
 
     def generate(self, prompt=None) -> str:
@@ -58,7 +69,7 @@ class WaveText:
         word_set = set(['*START*', '*END*'])
         for sentence in sentences:
             for word in sentence.split(' '):
-                set.add(word)
+                word_set.add(word)
         return len(word_set), word_set
     
     def freeze(self, path="") -> None:
