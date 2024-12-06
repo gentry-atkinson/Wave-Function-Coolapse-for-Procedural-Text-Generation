@@ -10,7 +10,10 @@ class WaveText:
     class Cell:
         def __init__(self, word=None):
             self.word = word
-            self.collapsed = False
+            if word:
+                self.collapsed = True
+            else:
+                self.collapsed = False
             self.possibles = dict()
         
         def get_max_possible(self) -> float:
@@ -26,14 +29,18 @@ class WaveText:
             else:
                 return ''
             
-        def collapse(self):
+        def collapse(self) -> None:
             assert not self.collapsed, "Collapse called on already collapsed cell."
             assert len(self.possibles) > 0, "Collapse called on cell with no possibles"
             self.collapsed = True
-            self.word = choices(list(self.possibles.keys()), 1, weights=list(self.possibles.values))
+            self.word = choices(list(self.possibles.keys()), k=1, weights=list(self.possibles.values()))[0]
+
+        def update(self, word: str, p: float) -> None:
+            self.possibles[word] = self.possibles.get(word, 0) + p
             
     def __init__(self):
-        pass
+        self.max_dist = 0
+        self.neighbor_count = None
 
     def fit(self, sentences: list[str], max_dist=1) -> None:
         """
@@ -64,25 +71,38 @@ class WaveText:
                 p_of_neighbors[0][word_one][word_two] /= num_sentences
 
         # If everything worked, store adjacencies
-        self.possibles = p_of_neighbors.copy()    
+        self.neighbor_count = p_of_neighbors.copy()
+        self.max_dist = max_dist
 
 
     def generate(self, prompt=None, str_len=12) -> str:
         """
         Generate a new sentece using the trained adjacencies.
         """
-        assert self.possibles, "Generator must fit before generation. Use WaveText.fit(...)"
+        assert self.neighbor_count, "Generator must fit before generation. Use WaveText.fit(...)"
         prompt_list =  prompt.split(' ')
         assert len(prompt_list) < str_len, "Prompt is too long for given string length."
 
-        empty_cells = self._get_padding_cells(len(prompt_list)+1, str_len-len(prompt_list))
+        empty_cells = self._get_padding_cells(str_len-len(prompt_list), len(prompt_list)+1)
         cell_list = [WaveText.Cell('*START*')]
         for i, prompt_word in enumerate(prompt_list):
-            cell_list = cell_list + [WaveText.Cell() for _ in range(empty_cells[i])]
-            cell_list = cell_list = [WaveText.Cell(prompt_word)]
-        cell_list = cell_list + [WaveText.Cell() for _ in range(empty_cells[-1])] + [WaveText.Cell('*END*')]
+            cell_list.extend([WaveText.Cell() for _ in range(empty_cells[i])])
+            cell_list.extend([WaveText.Cell(prompt_word)])
+        cell_list.extend([WaveText.Cell() for _ in range(empty_cells[-1])] + [WaveText.Cell('*END*')])
 
         # Propogate likelihoods from initial cells
+        for cell_idx, cell in enumerate(cell_list):
+            if not cell.collapsed:
+                continue
+            this_word = cell.get_word()
+            for i in range(1, self.max_dist+1):
+                if cell_idx - i > 0 and not cell_list[cell_idx - i].collapsed:
+                    for word in self.neighbor_count[i-1][this_word]:
+                        cell_list[cell_idx - i].update(word, self.neighbor_count[i-1][this_word][word])
+                if cell_idx + i < str_len-1 and not cell_list[cell_idx + i].collapsed:
+                    for word in self.neighbor_count[i-1][this_word]:
+                        cell_list[cell_idx + i].update(word, self.neighbor_count[i-1][this_word][word])
+
 
         while not all([cell.collapsed for cell in cell_list]):
             # Pick the lowest entroy cell
@@ -91,11 +111,17 @@ class WaveText:
             # Collapse the chosen cell
             cell_list[cell_idx].collapse()
 
-            # Add new neighbors to cell list
-
             # Propogate the change
+            this_word = cell_list[cell_idx].get_word()
+            for i in range(1, self.max_dist+1):
+                if cell_idx - i > 0 and not cell_list[cell_idx - i].collapsed:
+                    for word in self.neighbor_count[i-1][this_word]:
+                        cell_list[cell_idx - i].update(word, self.neighbor_count[i-1][this_word][word])
+                if cell_idx + i < str_len-1 and not cell_list[cell_idx + i].collapsed:
+                    for word in self.neighbor_count[i-1][this_word]:
+                        cell_list[cell_idx + i].update(word, self.neighbor_count[i-1][this_word][word])
         
-        return ' '.join([cell.get_word() for cell in cell_list])
+        return ' '.join([cell.get_word() for cell in cell_list[1:-1]])
 
     def _get_padding_cells(self, total_sum: int, num_values: int) -> list[int]:
         values = []
