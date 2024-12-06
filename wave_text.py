@@ -7,14 +7,19 @@ import numpy as np
 class WaveText:
 
     class Cell:
-        def __init__(self):
-            self.word = None
+        def __init__(self, word=None):
+            self.word = word
             self.collapsed = False
             self.possibles = dict()
         
-        def get_max_possible(self):
+        def get_max_possible(self) -> float:
             return sorted(list(self.possibles.values()))[-1]
-
+        
+        def get_word(self) -> str:
+            if self.word != None:
+                return self.word
+            else:
+                return ''
     def __init__(self):
         pass
 
@@ -37,13 +42,13 @@ class WaveText:
         for sentence in sentences:
             sentence_list = sentence.split(' ')
             for i, word_one in enumerate(sentence_list):
-                for word_two in sentence_list[i+1]:
-                    p_of_neighbors[0][word_one] = p_of_neighbors[0][word_one].get(word_two, 0) + 1
-                    p_of_neighbors[0][word_two] = p_of_neighbors[0][word_two].get(word_one, 0) + 1
+                for word_two in sentence_list[i+1:]:
+                    p_of_neighbors[0][word_one][word_two] = p_of_neighbors[0][word_one].get(word_two, 0) + 1
+                    p_of_neighbors[0][word_two][word_one] = p_of_neighbors[0][word_two].get(word_one, 0) + 1
 
         # Divide adjacency count by total 
         for word_one in p_of_neighbors[0]:
-            for word_two in p_of_neighbors[0]:
+            for word_two in p_of_neighbors[0][word_one]:
                 p_of_neighbors[0][word_one][word_two] /= num_sentences
 
         # If everything worked, store adjacencies
@@ -54,7 +59,10 @@ class WaveText:
         """
         Generate a new sentece using the trained adjacencies.
         """
+        cell_list = [WaveText.Cell()] + [WaveText.Cell(word) for word in prompt.split(' ')] + [WaveText.Cell()]
         assert self.possibles, "Generator must fit before generation. Use WaveText.fit(...)"
+
+        return ' '.join([cell.get_word() for cell in cell_list])
 
     def _min_entropy(self, cell_list: list) -> int:
         """

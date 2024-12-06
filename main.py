@@ -24,14 +24,12 @@ if __name__ == '__main__':
 
 
     book_text = response.text[TEXT_START: TEXT_END]
-    # print(book_text[:100])
-    # print(len(book_text))
-    # rem_chars = ['\n', '_']
-    # for char in rem_chars:
-    #     book_text = book_text.replace(char, " ")
-    # print(len(book_text))
+    book_text = book_text.replace('\r', '')
+    book_text = book_text.replace('\n', '')
     sentences = [sentence.strip() for sentence in split_into_sentences(book_text)]
 
     wt = WaveText()
     wt.fit(sentences)
-    print(wt.possibles)
+    
+    sample_output = wt.generate("tea was")
+    print(sample_output)
