@@ -41,6 +41,7 @@ class WaveText:
     def __init__(self):
         self.max_dist = 0
         self.neighbor_count = None
+        self.cell_list = None
 
     def fit(self, sentences: list[str], max_dist=1) -> None:
         """
@@ -84,45 +85,50 @@ class WaveText:
         assert len(prompt_list) < str_len, "Prompt is too long for given string length."
 
         empty_cells = self._get_padding_cells(str_len-len(prompt_list), len(prompt_list)+1)
-        cell_list = [WaveText.Cell('*START*')]
+        self.cell_list = [WaveText.Cell('*START*')]
         for i, prompt_word in enumerate(prompt_list):
-            cell_list.extend([WaveText.Cell() for _ in range(empty_cells[i])])
-            cell_list.extend([WaveText.Cell(prompt_word)])
-        cell_list.extend([WaveText.Cell() for _ in range(empty_cells[-1])] + [WaveText.Cell('*END*')])
+            self.cell_list.extend([WaveText.Cell() for _ in range(empty_cells[i])])
+            self.cell_list.extend([WaveText.Cell(prompt_word)])
+        self.cell_list.extend([WaveText.Cell() for _ in range(empty_cells[-1])] + [WaveText.Cell('*END*')])
 
         # Propogate likelihoods from initial cells
-        for cell_idx, cell in enumerate(cell_list):
-            if not cell.collapsed:
+        for cell_idx, _ in enumerate(self.cell_list):
+            if not self.cell_list[cell_idx].collapsed:
                 continue
-            this_word = cell.get_word()
-            for i in range(1, self.max_dist+1):
-                if cell_idx - i > 0 and not cell_list[cell_idx - i].collapsed:
-                    for word in self.neighbor_count[i-1][this_word]:
-                        cell_list[cell_idx - i].update(word, self.neighbor_count[i-1][this_word][word])
-                if cell_idx + i < str_len-1 and not cell_list[cell_idx + i].collapsed:
-                    for word in self.neighbor_count[i-1][this_word]:
-                        cell_list[cell_idx + i].update(word, self.neighbor_count[i-1][this_word][word])
+            self._propogate(cell_idx)
+            
 
 
-        while not all([cell.collapsed for cell in cell_list]):
+        while not all([cell.collapsed for cell in self.cell_list]):
+            print(' '.join([cell.get_word() for cell in self.cell_list]))
             # Pick the lowest entroy cell
-            cell_idx = self._min_entropy(cell_list)
+            cell_idx = self._min_entropy(self.cell_list)
 
             # Collapse the chosen cell
-            cell_list[cell_idx].collapse()
+            self.cell_list[cell_idx].collapse()
 
             # Propogate the change
-            this_word = cell_list[cell_idx].get_word()
-            for i in range(1, self.max_dist+1):
-                if cell_idx - i > 0 and not cell_list[cell_idx - i].collapsed:
-                    for word in self.neighbor_count[i-1][this_word]:
-                        cell_list[cell_idx - i].update(word, self.neighbor_count[i-1][this_word][word])
-                if cell_idx + i < str_len-1 and not cell_list[cell_idx + i].collapsed:
-                    for word in self.neighbor_count[i-1][this_word]:
-                        cell_list[cell_idx + i].update(word, self.neighbor_count[i-1][this_word][word])
+            this_word = self.cell_list[cell_idx].get_word()
+            self._propogate(cell_idx)
         
-        return ' '.join([cell.get_word() for cell in cell_list[1:-1]])
+        return ' '.join([cell.get_word() for cell in self.cell_list[1:-1]])
 
+    def _propogate(self, cell_idx: int):
+        assert self.cell_list[cell_idx].collapsed, "Propogate called for uncolapsed cell"
+        cell = self.cell_list[cell_idx]
+        this_word = cell.get_word()
+        for i in range(1, self.max_dist+1):
+            # Lower Neighbor
+            if cell_idx - i > 0 and not self.cell_list[cell_idx - i].collapsed:
+                for word in self.neighbor_count[i-1][this_word]:
+                    self.cell_list[cell_idx - i].update(word, self.neighbor_count[i-1][this_word][word])
+
+            # Upper Neighbor
+            if cell_idx + i < len(self.cell_list) and not self.cell_list[cell_idx + i].collapsed:
+                for word in self.neighbor_count[i-1][this_word]:
+                    self.cell_list[cell_idx + i].update(word, self.neighbor_count[i-1][this_word][word])
+
+    
     def _get_padding_cells(self, total_sum: int, num_values: int) -> list[int]:
         values = []
         cur_sum = 0
