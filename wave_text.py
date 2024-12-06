@@ -3,6 +3,7 @@
 # Date: December 5th, 2024
 
 import numpy as np
+from random import choices, randint
 
 class WaveText:
 
@@ -13,6 +14,10 @@ class WaveText:
             self.possibles = dict()
         
         def get_max_possible(self) -> float:
+            if self.collapsed:
+                return 0
+            elif len(self.possibles) == 0:
+                return 0
             return sorted(list(self.possibles.values()))[-1]
         
         def get_word(self) -> str:
@@ -20,6 +25,13 @@ class WaveText:
                 return self.word
             else:
                 return ''
+            
+        def collapse(self):
+            assert not self.collapsed, "Collapse called on already collapsed cell."
+            assert len(self.possibles) > 0, "Collapse called on cell with no possibles"
+            self.collapsed = True
+            self.word = choices(list(self.possibles.keys()), 1, weights=list(self.possibles.values))
+            
     def __init__(self):
         pass
 
@@ -55,20 +67,52 @@ class WaveText:
         self.possibles = p_of_neighbors.copy()    
 
 
-    def generate(self, prompt=None) -> str:
+    def generate(self, prompt=None, str_len=12) -> str:
         """
         Generate a new sentece using the trained adjacencies.
         """
-        cell_list = [WaveText.Cell()] + [WaveText.Cell(word) for word in prompt.split(' ')] + [WaveText.Cell()]
         assert self.possibles, "Generator must fit before generation. Use WaveText.fit(...)"
+        prompt_list =  prompt.split(' ')
+        assert len(prompt_list) < str_len, "Prompt is too long for given string length."
 
+        empty_cells = self._get_padding_cells(len(prompt_list)+1, str_len-len(prompt_list))
+        cell_list = [WaveText.Cell('*START*')]
+        for i, prompt_word in enumerate(prompt_list):
+            cell_list = cell_list + [WaveText.Cell() for _ in range(empty_cells[i])]
+            cell_list = cell_list = [WaveText.Cell(prompt_word)]
+        cell_list = cell_list + [WaveText.Cell() for _ in range(empty_cells[-1])] + [WaveText.Cell('*END*')]
+
+        # Propogate likelihoods from initial cells
+
+        while not all([cell.collapsed for cell in cell_list]):
+            # Pick the lowest entroy cell
+            cell_idx = self._min_entropy(cell_list)
+
+            # Collapse the chosen cell
+            cell_list[cell_idx].collapse()
+
+            # Add new neighbors to cell list
+
+            # Propogate the change
+        
         return ' '.join([cell.get_word() for cell in cell_list])
 
+    def _get_padding_cells(self, total_sum: int, num_values: int) -> list[int]:
+        values = []
+        cur_sum = 0
+        for _ in range(num_values-1):
+            new_num = randint(0, total_sum - cur_sum)
+            cur_sum += new_num
+            values.append(new_num)
+        values.append(total_sum - cur_sum)
+        return values
+
+    
     def _min_entropy(self, cell_list: list) -> int:
         """
         Returns the index of the Cell in cell_list with the MOST probable word
         """
-        pass
+        return np.argmax([cell.get_max_possible() for cell in cell_list])
 
     def _count_uniques(self, sentences: list) -> tuple[int, set]:
         """

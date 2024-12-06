@@ -31,5 +31,5 @@ if __name__ == '__main__':
     wt = WaveText()
     wt.fit(sentences)
     
-    sample_output = wt.generate("tea was")
+    sample_output = wt.generate("tea was", str_len=12)
     print(sample_output)
