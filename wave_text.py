@@ -5,13 +5,19 @@
 import numpy as np
 from random import choices, randint
 from nltk.tokenize import word_tokenize
+import re
 
 # TODO:
 #  - adjacency counting should be directional
+#  - New neighbor_count structure
+#   {[distance][word 1][word2] : probability}
+# e.g. {[1][dog][cat] : the likelihood that cat is immediately after dog}
+# e.g. {[-1][dog][cat] : the likelihood that cat is immediately before dog}
 
 def split_sentence_to_words(s: str) -> list[str]:
     tokens = word_tokenize(s)
     tokens = [t for t in tokens if t.isalnum()]
+    tokens = [re.sub(r'[^\w\s]', '', t) for t in tokens if re.sub(r'[^\w\s]', '', t)]
     return tokens
 
 class WaveText:
@@ -53,7 +59,7 @@ class WaveText:
             max_dist : the maximum separation of compared words
         """
         self.max_dist = max_dist
-        self.neighbor_count = None
+        self.neighbor_count = {n:dict() for n in range(-1*max_dist, max_dist+1) if n != 0}
         self.cell_list = None
 
     def fit(self, sentences: list[str]) -> None:
@@ -64,12 +70,15 @@ class WaveText:
             sentences: list of examples senteces as strings
         """
         assert sentences and len(sentences) > 0, "Generator must be provided training text"
-        assert self.max_dist==1, "Relax. I haven't implemented that yet. Max dist must be 1"
+        # assert self.max_dist==1, "Relax. I haven't implemented that yet. Max dist must be 1"
 
         # Setup
         num_uniques, word_set = self._count_uniques(sentences)
-        p_of_neighbors = [{word: dict() for word in word_set} for _ in range(self.max_dist)]
         num_sentences = len(sentences)
+        for word in word_set:
+            for d in self.neighbor_count:
+                if word not in self.neighbor_count[d]:
+                    self.neighbor_count[d][word] = dict()
 
         # Count Adjacencies
         for sentence in sentences:
@@ -77,16 +86,17 @@ class WaveText:
             sentence_list = split_sentence_to_words(sentence)
             for i, word_one in enumerate(sentence_list):
                 for word_two in sentence_list[i+1:]:
-                    p_of_neighbors[0][word_one][word_two] = p_of_neighbors[0][word_one].get(word_two, 0) + 1
-                    p_of_neighbors[0][word_two][word_one] = p_of_neighbors[0][word_two].get(word_one, 0) + 1
+                    self.neighbor_count[1][word_one][word_two] = self.neighbor_count[1][word_one].get(word_two, 0) + 1
+                    self.neighbor_count[-1][word_two][word_one] = self.neighbor_count[-1][word_two].get(word_one, 0) + 1
 
         # Divide adjacency count by total 
-        for word_one in p_of_neighbors[0]:
-            for word_two in p_of_neighbors[0][word_one]:
-                p_of_neighbors[0][word_one][word_two] /= num_sentences
+        for d in self.neighbor_count:
+            for word_one in self.neighbor_count[d]:
+                for word_two in self.neighbor_count[d][word_one]:
+                    self.neighbor_count[d][word_one][word_two] /= num_sentences
 
         # If everything worked, store adjacencies
-        self.neighbor_count = p_of_neighbors.copy()
+        #self.neighbor_count = p_of_neighbors.copy()
 
 
     def generate(self, prompt=None, str_len=12) -> str:
@@ -131,16 +141,16 @@ class WaveText:
         assert self.cell_list[cell_idx].collapsed, "Propogate called for uncolapsed cell"
         cell = self.cell_list[cell_idx]
         this_word = cell.get_word()
-        for i in range(1, self.max_dist+1):
+        for i in self.neighbor_count:
             # Lower Neighbor
-            if cell_idx - i > 0 and not self.cell_list[cell_idx - i].collapsed:
-                for word in self.neighbor_count[i-1][this_word]:
-                    self.cell_list[cell_idx - i].update(word, self.neighbor_count[i-1][this_word][word])
+            if len(self.cell_list) > cell_idx - i > 0 and not self.cell_list[cell_idx - i].collapsed:
+                for word in self.neighbor_count[i][this_word]:
+                    self.cell_list[cell_idx - i].update(word, self.neighbor_count[i][this_word][word])
 
             # Upper Neighbor
-            if cell_idx + i < len(self.cell_list) and not self.cell_list[cell_idx + i].collapsed:
-                for word in self.neighbor_count[i-1][this_word]:
-                    self.cell_list[cell_idx + i].update(word, self.neighbor_count[i-1][this_word][word])
+            if 0 < cell_idx + i < len(self.cell_list) and not self.cell_list[cell_idx + i].collapsed:
+                for word in self.neighbor_count[i][this_word]:
+                    self.cell_list[cell_idx + i].update(word, self.neighbor_count[i][this_word][word])
 
     
     def _get_padding_cells(self, total_sum: int, num_values: int) -> list[int]:
