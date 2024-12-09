@@ -9,6 +9,11 @@ from nltk.tokenize import word_tokenize
 # TODO:
 #  - adjacency counting should be directional
 
+def split_sentence_to_words(s: str) -> list[str]:
+    tokens = word_tokenize(s)
+    tokens = [t for t in tokens if t.isalnum()]
+    return tokens
+
 class WaveText:
 
     class Cell:
@@ -42,30 +47,34 @@ class WaveText:
         def update(self, word: str, p: float) -> None:
             self.possibles[word] = self.possibles.get(word, 0) + p
             
-    def __init__(self):
-        self.max_dist = 0
+    def __init__(self, max_dist=1):
+        """
+        Parameters:
+            max_dist : the maximum separation of compared words
+        """
+        self.max_dist = max_dist
         self.neighbor_count = None
         self.cell_list = None
 
-    def fit(self, sentences: list[str], max_dist=1) -> None:
+    def fit(self, sentences: list[str]) -> None:
         """
         Initialize the generator by observing the adjacencies in the provided sentences.
         Parameters:
-            max_dist : the maximum separation of compared words
+            
             sentences: list of examples senteces as strings
         """
         assert sentences and len(sentences) > 0, "Generator must be provided training text"
-        assert max_dist==1, "Relax. I haven't implemented that yet. Max dist must be 1"
+        assert self.max_dist==1, "Relax. I haven't implemented that yet. Max dist must be 1"
 
         # Setup
         num_uniques, word_set = self._count_uniques(sentences)
-        p_of_neighbors = [{word: dict() for word in word_set} for _ in range(max_dist)]
+        p_of_neighbors = [{word: dict() for word in word_set} for _ in range(self.max_dist)]
         num_sentences = len(sentences)
 
         # Count Adjacencies
         for sentence in sentences:
             #sentence_list = sentence.split(' ')
-            sentence_list = word_tokenize(sentence)
+            sentence_list = split_sentence_to_words(sentence)
             for i, word_one in enumerate(sentence_list):
                 for word_two in sentence_list[i+1:]:
                     p_of_neighbors[0][word_one][word_two] = p_of_neighbors[0][word_one].get(word_two, 0) + 1
@@ -78,7 +87,6 @@ class WaveText:
 
         # If everything worked, store adjacencies
         self.neighbor_count = p_of_neighbors.copy()
-        self.max_dist = max_dist
 
 
     def generate(self, prompt=None, str_len=12) -> str:
@@ -87,7 +95,7 @@ class WaveText:
         """
         assert self.neighbor_count, "Generator must fit before generation. Use WaveText.fit(...)"
         #prompt_list =  prompt.split(' ')
-        prompt_list = word_tokenize(prompt)
+        prompt_list = split_sentence_to_words(prompt)
         assert len(prompt_list) < str_len, "Prompt is too long for given string length."
 
         empty_cells = self._get_padding_cells(str_len-len(prompt_list), len(prompt_list)+1)
@@ -159,7 +167,7 @@ class WaveText:
         word_set = set(['*START*', '*END*'])
         for sentence in sentences:
             #for word in sentence.split(' '):
-            for word in word_tokenize(sentence):
+            for word in split_sentence_to_words(sentence):
                 word_set.add(word)
         return len(word_set), word_set
     
