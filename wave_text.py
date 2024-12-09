@@ -18,6 +18,7 @@ def split_sentence_to_words(s: str) -> list[str]:
     tokens = word_tokenize(s)
     tokens = [t for t in tokens if t.isalnum()]
     tokens = [re.sub(r'[^\w\s]', '', t) for t in tokens if re.sub(r'[^\w\s]', '', t)]
+    tokens = [t.lower() for t in tokens]
     return tokens
 
 class WaveText:
@@ -135,7 +136,8 @@ class WaveText:
             this_word = self.cell_list[cell_idx].get_word()
             self._propogate(cell_idx)
         
-        return ' '.join([cell.get_word() for cell in self.cell_list[1:-1]])
+        out_str = ' '.join([cell.get_word() for cell in self.cell_list[1:-1]])
+        return out_str[0].upper() + out_str[1:] + '.'
 
     def _propogate(self, cell_idx: int):
         assert self.cell_list[cell_idx].collapsed, "Propogate called for uncolapsed cell"
@@ -174,12 +176,12 @@ class WaveText:
         """
         Return the number of numique words in sentences
         """
-        word_set = set(['*START*', '*END*'])
+        word_set = set()
         for sentence in sentences:
             #for word in sentence.split(' '):
             for word in split_sentence_to_words(sentence):
                 word_set.add(word)
-        return len(word_set), word_set
+        return len(word_set), ['*START*'] + [word.lower() for word in word_set] + ['*END*']
     
     def freeze(self, path="") -> None:
         """

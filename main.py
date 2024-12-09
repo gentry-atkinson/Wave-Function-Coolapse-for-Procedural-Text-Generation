@@ -19,7 +19,7 @@ except:
     nltk.download('punkt_tab')
 
 if __name__ == '__main__':
-    text_idx = 1
+    text_idx = 0
     book_text = open(os.path.join('text', text_list[text_idx])).read()
 
     book_text = book_text.replace('\r', '')
@@ -28,6 +28,26 @@ if __name__ == '__main__':
 
 
     wt = WaveText(max_dist=3)
+    print(f'Fitting to text: {text_list[text_idx]}')
+    wt.fit(sentences)
+
+    text_idx = 1
+    book_text = open(os.path.join('text', text_list[text_idx])).read()
+
+    book_text = book_text.replace('\r', '')
+    book_text = book_text.replace('\n', '')
+    sentences = nltk.tokenize.sent_tokenize(book_text)
+
+    print(f'Fitting to text: {text_list[text_idx]}')
+    wt.fit(sentences)
+
+    text_idx = 2
+    book_text = open(os.path.join('text', text_list[text_idx])).read()
+
+    book_text = book_text.replace('\r', '')
+    book_text = book_text.replace('\n', '')
+    sentences = nltk.tokenize.sent_tokenize(book_text)
+
     print(f'Fitting to text: {text_list[text_idx]}')
     wt.fit(sentences)
     
