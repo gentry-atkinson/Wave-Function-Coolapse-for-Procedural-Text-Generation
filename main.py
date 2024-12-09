@@ -6,6 +6,12 @@ import requests
 
 import re
 from wave_text import WaveText
+import nltk
+import os
+
+# TODO:
+#  - use NLP module to scrub punctuation and separate words correctly
+#  - support training on multiple texts
 
 def split_into_sentences(paragraph):
     # https://medium.com/@ravindul97/sentence-splitting-in-nlp-2948c90de4a2
@@ -14,22 +20,24 @@ def split_into_sentences(paragraph):
     sentences = re.split(sentence_endings, paragraph)    
     return sentences
 
-TEXT_URL = "https://www.gutenberg.org/cache/epub/11/pg11.txt"
-TEXT_START = 1491
-TEXT_END = 148818
+
+text_list = os.listdir('text')
+text_list.remove('sources.txt')
+
+nltk.download('punkt_tab')
 
 if __name__ == '__main__':
-    response = requests.get(TEXT_URL)
-    assert response.status_code == 200, "Couldn't read text from provided URL."
+    print(text_list)
+    book_text = open(os.path.join('text', text_list[0])).read()
 
-
-    book_text = response.text[TEXT_START: TEXT_END]
     book_text = book_text.replace('\r', '')
     book_text = book_text.replace('\n', '')
-    sentences = [sentence.strip() for sentence in split_into_sentences(book_text)]
+    book_text = book_text.replace('*', '')
+    sentences = nltk.tokenize.sent_tokenize(book_text)
+
 
     wt = WaveText()
     wt.fit(sentences)
     
-    sample_output = wt.generate("tea was", str_len=12)
+    sample_output = wt.generate("all people", str_len=12)
     print(sample_output)

@@ -4,6 +4,10 @@
 
 import numpy as np
 from random import choices, randint
+from nltk.tokenize import word_tokenize
+
+# TODO:
+#  - adjacency counting should be directional
 
 class WaveText:
 
@@ -60,7 +64,8 @@ class WaveText:
 
         # Count Adjacencies
         for sentence in sentences:
-            sentence_list = sentence.split(' ')
+            #sentence_list = sentence.split(' ')
+            sentence_list = word_tokenize(sentence)
             for i, word_one in enumerate(sentence_list):
                 for word_two in sentence_list[i+1:]:
                     p_of_neighbors[0][word_one][word_two] = p_of_neighbors[0][word_one].get(word_two, 0) + 1
@@ -81,7 +86,8 @@ class WaveText:
         Generate a new sentece using the trained adjacencies.
         """
         assert self.neighbor_count, "Generator must fit before generation. Use WaveText.fit(...)"
-        prompt_list =  prompt.split(' ')
+        #prompt_list =  prompt.split(' ')
+        prompt_list = word_tokenize(prompt)
         assert len(prompt_list) < str_len, "Prompt is too long for given string length."
 
         empty_cells = self._get_padding_cells(str_len-len(prompt_list), len(prompt_list)+1)
@@ -100,7 +106,7 @@ class WaveText:
 
 
         while not all([cell.collapsed for cell in self.cell_list]):
-            print(' '.join([cell.get_word() for cell in self.cell_list]))
+            # print(' '.join([cell.get_word() for cell in self.cell_list]))
             # Pick the lowest entroy cell
             cell_idx = self._min_entropy(self.cell_list)
 
@@ -152,7 +158,8 @@ class WaveText:
         """
         word_set = set(['*START*', '*END*'])
         for sentence in sentences:
-            for word in sentence.split(' '):
+            #for word in sentence.split(' '):
+            for word in word_tokenize(sentence):
                 word_set.add(word)
         return len(word_set), word_set
     
