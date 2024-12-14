@@ -36,7 +36,7 @@ class WaveText:
             if self.collapsed:
                 return 0
             elif len(self.possibles) == 0:
-                return 0
+                return -1
             return sorted(list(self.possibles.values()))[-1]
         
         def get_word(self) -> str:
@@ -141,9 +141,8 @@ class WaveText:
 
     def _propogate(self, cell_idx: int):
         assert self.cell_list[cell_idx].collapsed, "Propogate called for uncolapsed cell"
-        cell = self.cell_list[cell_idx]
-        this_word = cell.get_word()
-        for i in self.neighbor_count:
+        this_word = self.cell_list[cell_idx].get_word()
+        for i in self.neighbor_count: # keys: -max_dist up to +max_dist excluding 0
             # Lower Neighbor
             if len(self.cell_list) > cell_idx - i > 0 and not self.cell_list[cell_idx - i].collapsed:
                 for word in self.neighbor_count[i][this_word]:

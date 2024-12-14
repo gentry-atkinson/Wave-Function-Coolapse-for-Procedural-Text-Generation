@@ -10,6 +10,8 @@ import os
 # TODO:
 #  - support training on multiple texts
 
+DEBUG = True
+
 text_list = os.listdir('text')
 text_list.remove('sources.txt')
 
@@ -19,9 +21,9 @@ except:
     nltk.download('punkt_tab')
 
 if __name__ == '__main__':
-    wt = WaveText(max_dist=3)
+    wt = WaveText(max_dist=6)
 
-    for text_idx, text_name in enumerate(text_list):
+    for text_idx, text_name in enumerate(text_list if not DEBUG else text_list[:1]):
         book_text = open(os.path.join('text', text_list[text_idx])).read()
 
         book_text = book_text.replace('\r', '')
@@ -30,5 +32,5 @@ if __name__ == '__main__':
         print(f'Fitting to text: {text_name}')
         wt.fit(sentences)
     
-    sample_output = wt.generate("all people", str_len=12)
+    sample_output = wt.generate("strong people", str_len=12)
     print(sample_output)
