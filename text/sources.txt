@@ -9,3 +9,34 @@
 3)  Alice’s Adventures in Wonderland
     by Lewis Carroll
     https://www.gutenberg.org/cache/epub/11/pg11.txt
+
+4)  Frankenstein; or, the Modern Prometheus
+    by Mary Wollstonecraft (Godwin) Shelley
+    https://www.gutenberg.org/cache/epub/84/pg84.txt
+
+5)  The Scarlet Letter
+    Nathaniel Hawthorne
+    https://www.gutenberg.org/cache/epub/25344/pg25344.txt
+
+6)  Little Women; Or, Meg, Jo, Beth, and Amy
+    Louisa May Alcott
+    https://www.gutenberg.org/cache/epub/37106/pg37106.txt
+
+7)  The Great Gatsby
+    F. Scott Fitzgerald
+    https://www.gutenberg.org/cache/epub/64317/pg64317.txt
+
+8)  Crime and Punishment
+    Fyodor Dostoyevsky
+    https://www.gutenberg.org/cache/epub/2554/pg2554.txt
+
+9)  Dracula
+    Bram Stoker
+    https://www.gutenberg.org/cache/epub/345/pg345.txt
+
+10) Leviathan
+    Thomas Hobbes
+    https://www.gutenberg.org/cache/epub/3207/pg3207.txt
+
+
+
