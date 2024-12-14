@@ -1,3 +1,9 @@
+All sources have been retrieved from Project Gutenberg.
+
+Only English-language texts have been utilized. These texts have been selected
+for their frequency of use on Project Gutenberg rather than being selected for
+merit or signifigance.
+
 1)  Gods of Mars
     by William Rice Burroughs
     https://www.gutenberg.org/cache/epub/29405/pg29405.txt
@@ -37,6 +43,46 @@
 10) Leviathan
     Thomas Hobbes
     https://www.gutenberg.org/cache/epub/3207/pg3207.txt
+
+11) A Christmas Carol in Prose; Being a Ghost Story of Christmas
+    Charles Dickens
+    https://www.gutenberg.org/cache/epub/46/pg46.txt
+
+12) Middlemarch
+    George Eliot
+    https://www.gutenberg.org/cache/epub/145/pg145.txt
+
+13) A Room with a View
+    E. M. Forster
+    https://www.gutenberg.org/cache/epub/2641/pg2641.txt
+
+14) The Enchanted April
+    Elizabeth Von Arnim
+    https://www.gutenberg.org/cache/epub/16389/pg16389.txt
+
+15) The Blue Castle: a novel
+    L. M. Montgomery
+    https://www.gutenberg.org/cache/epub/67979/pg67979.txt
+
+16) Pride and Prejudice
+    Jane Austen
+    https://www.gutenberg.org/cache/epub/1342/pg1342.txt
+
+17) The Adventures of Ferdinand Count Fathom — Complete
+    T. Smollett
+    https://www.gutenberg.org/cache/epub/6761/pg6761.txt
+
+18) Cranford
+    Elizabeth Cleghorn Gaskell
+    https://www.gutenberg.org/cache/epub/394/pg394.txt
+
+19) History of Tom Jones, a Foundling
+    Henry Fielding
+    https://www.gutenberg.org/cache/epub/6593/pg6593.txt
+
+20) Twenty years after
+    Alexandre Dumas and Auguste Maquet
+    https://www.gutenberg.org/cache/epub/1259/pg1259.txt
 
 
 
