@@ -71,7 +71,7 @@ class WaveText:
             sentences: list of examples senteces as strings
         """
         assert sentences and len(sentences) > 0, "Generator must be provided training text"
-        # assert self.max_dist==1, "Relax. I haven't implemented that yet. Max dist must be 1"
+        # print(sentences[100])
 
         # Setup
         num_uniques, word_set = self._count_uniques(sentences)

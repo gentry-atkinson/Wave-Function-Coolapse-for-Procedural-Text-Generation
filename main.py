@@ -8,17 +8,17 @@ import nltk
 import os
 
 # TODO:
-#  - support training on multiple texts
 
-DEBUG = True
+
+DEBUG = False
 
 text_list = os.listdir('text')
 text_list.remove('sources.txt')
 
 try:
-    nltk.find('tokenizers/punkt')
-except:
-    nltk.download('punkt_tab')
+    nltk.data.find(os.path.join('tokenizers', 'punkt'))
+except LookupError:
+    nltk.download('punkt')
 
 if __name__ == '__main__':
     wt = WaveText(max_dist=6)
@@ -26,8 +26,8 @@ if __name__ == '__main__':
     for text_idx, text_name in enumerate(text_list if not DEBUG else text_list[:1]):
         book_text = open(os.path.join('text', text_list[text_idx])).read()
 
-        book_text = book_text.replace('\r', '')
-        book_text = book_text.replace('\n', '')
+        book_text = book_text.replace('\r', ' ')
+        book_text = book_text.replace('\n', ' ')
         sentences = nltk.tokenize.sent_tokenize(book_text)
         print(f'Fitting to text: {text_name}')
         wt.fit(sentences)
